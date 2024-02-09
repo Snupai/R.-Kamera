@@ -49,15 +49,18 @@ def performChecks(ap: argparse.ArgumentParser, args: dict):
             raise Exception("You can't use --get-cameras with other arguments")
     elif args["camera"] and args["image"]:
         raise Exception("You can't use -c and -i at the same time")
-    elif args["camera"] or args["image"]:
+    elif args["camera"]:
+        if args["get_yellowest_pixel"] and args["get_greenest_pixel"]:
+            raise Exception("You can't use -g and -y at the same time")
+        elif args["camera"] < 0:
+            raise Exception("Invalid camera index")
+    elif args["image"]:
         if args["get_yellowest_pixel"] and args["get_greenest_pixel"]:
             raise Exception("You can't use -g and -y at the same time")
         elif not os.path.isfile(args["image"]):
             raise Exception(f"File {args['image']} does not exist")
         elif args["image"] and not (args["get_yellowest_pixel"] or args["get_greenest_pixel"]):
             raise Exception("You can't use -i without -y or -g")
-    else:
-        raise Exception("Invalid arguments")
 
 
 # Print critical error message and exit
@@ -240,7 +243,7 @@ def main() -> int:
     if args.get_cameras:
         get_cameras()
         return 0
-    elif args.camera:
+    elif args.camera >= 0:
         cap = open_camera(int(args.camera))
         if args.live_feed:
             if(args.get_yellowest_pixel):
