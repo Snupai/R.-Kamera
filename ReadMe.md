@@ -14,7 +14,7 @@ To compile and run the C# part of the project, make sure you have the following 
 After installing the prerequisites, you can clone the repository and open the solution file using Visual Studio.
 
 ```shell
-git clone [https://example.com/Ritter-Kamera.git](https://github.com/Snupai/R.-Kamera.git)
+git clone https://github.com/Snupai/R.-Kamera.git
 cd R.-Kamera/Kamera_Csharp/
 start Kamera-Regelung.sln
 ```
