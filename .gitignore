@@ -1,5 +1,5 @@
 venv/
-frame.jpg
+*.jpg
 .vscode/
 .venv/
 Kamera_Csharp/Kamera-Regelung/bin/
