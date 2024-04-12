@@ -90,6 +90,7 @@ old_time = millis()
 def get_cameras():
     index = 0
     while True:
+        #BUG: cv2 Captures on Raspberry Pi don't seem to work what so ever...
         cap = cv2.VideoCapture(index)
         if not cap.read()[0]:
             break
@@ -134,24 +135,27 @@ def get_greenest_pixel(frame):
 
 def open_camera(camera_index):
     # open camera stream
-    cap = cv2.VideoCapture(camera_index)
+    try:
+        cap = cv2.VideoCapture(camera_index)
+    except Exception as e:
+        e
     return cap
 
 
 def take_frame(cap):
     # take current frame from camera stream
-    ret, frame = cap.read()
+    _, frame = cap.read()
     # crop frame while using int x and int y as the middle coordinate to crop to 100px * 3px to have a narrow line to detect the yellowest pixel
-    frame = crop_frame(frame)
+    frame = crop_frame(frame, frame.shape[1], frame.shape[0])
     return frame
 
-def crop_frame(frame):
-    y = frame.shape[0] / 2
-    frame = frame[int(y)-5:int(y)+5, 0:frame.shape[1]]
+def crop_frame(frame, width, height):
+    y = height / 2
+    frame = frame[int(y)-5:int(y)+5, 0:width]
     return frame
 
 
-def get_current_mouse_position(event, x, y, flags, param):
+def get_current_mouse_position(event, x, y):
     # print current mouse position to console
     if event == cv2.EVENT_LBUTTONDOWN:
         print(x, y)
@@ -219,7 +223,10 @@ def do_check(cap, get_pixel_function):
         old_time = millis()
         _, frame = cap.read()
         frame = take_frame(cap)
-        frame = crop_frame(frame)
+        # get frame width and height
+        width = frame.shape[1]
+        height = frame.shape[0]
+        frame = crop_frame(frame, width, height)
         get_pixel_function(frame)
         # open window to detect when user wants to close it
         if cv2.waitKey(1) & 0xFF == ord("q") or cv2.getWindowProperty("frame", cv2.WND_PROP_VISIBLE) < 1:
@@ -232,6 +239,7 @@ def do_check(cap, get_pixel_function):
 # main
 def main() -> int:
     just_fix_windows_console()
+
     ap = buildArgumentsParser()
     args = buildArgumentsParser().parse_args()
 
@@ -256,17 +264,20 @@ def main() -> int:
             frame = take_frame(cap)
             cv2.imwrite("frame.jpg", frame)
             if args.get_yellowest_pixel:
-                printInfo(get_yellowest_pixel(frame))
+                printInfo(str(get_yellowest_pixel(frame)))
             else:
-                printInfo(get_greenest_pixel(frame))
+                printInfo(str(get_greenest_pixel(frame)))
     elif args.image:
-        frame = cv2.imread(args.image)
-        frame = crop_frame(frame)
+        try:
+            frame = cv2.imread(args.image)
+        except Exception as e:
+            printCriticalError(str(e))
+        frame = crop_frame(frame, frame.shape[1], frame.shape[0])
         cv2.imwrite("frame.jpg", frame)
         if(args.get_yellowest_pixel):
-            printInfo("Yellowest pixel: " + get_yellowest_pixel(frame))
+            printInfo("Yellowest pixel: " + str(get_yellowest_pixel(frame)))
         elif(args.get_greenest_pixel):
-            printInfo("Greenest pixel: " + get_greenest_pixel(frame))
+            printInfo("Greenest pixel: " + str(get_greenest_pixel(frame)))
         return 0
     else:
         printHelp(ap)
